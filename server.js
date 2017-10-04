@@ -5,6 +5,7 @@
 
 'use strict';
 
+// call packages
 var fs = require('fs');
 var express = require('express');
 var app = express();
@@ -22,6 +23,48 @@ if (!process.env.DISABLE_XORIGIN) {
   });
 }
 
+var router = express.Router();
+
+router.route("/:message")
+  
+  .get(function(req, res) {
+    var stamp = {"unix": 0, "natural": 0};
+    var message = req.params.message;
+    var str = isNaN(message);
+  if (str) {
+    // convert to unix
+    message = new Date(message).getTime() / 1000;
+    stamp.unix = message;
+    stamp.natural = req.params.message;
+  } else {
+    // convert to string
+    message = parseInt(message);
+    message = new Date(message*1000);
+    var locale = "en-us",
+    month = message.toLocaleString(locale, { month: "long" }),
+    day = message.getDate(),
+    year = message.getFullYear();
+    var date = month+' '+day+', '+year;
+    stamp.unix = parseInt(req.params.message);
+    stamp.natural = date;
+    if (month === "Invalid Date") {
+      message = null;
+    }
+  }
+
+  if (message === null || isNaN(message)) {
+    stamp.unix = null;
+    stamp.natural = null;
+  }
+
+  res.json(stamp);
+});
+
+
+app.use('/api', router);
+
+
+// middleware ??
 app.use('/public', express.static(process.cwd() + '/public'));
 
 app.route('/_api/package.json')
